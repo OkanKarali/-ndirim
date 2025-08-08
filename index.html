@@ -1,0 +1,725 @@
+<!doctype html>
+<html lang="tr" class="h-full">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>İndirim Hesaplayıcı — Apple tarzı sade ve şık arayüz</title>
+  <meta name="description" content="Apple benzeri modern ve sade arayüz ile indirim hesaplama: Normal fiyat, indirim oranı ve indirimli fiyatı otomatik hesaplayın." />
+  <link rel="icon" href="data:," />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            surface: {
+              light: '#ffffff',
+              dark: '#0b0b0c'
+            },
+            ink: {
+              light: '#0b0b0c',
+              muted: '#63738a',
+              soft: '#94a3b8',
+              inverted: '#f8fafc'
+            },
+            brand: {
+              50: '#eef5ff',
+              100: '#dbebff',
+              200: '#b7d6ff',
+              300: '#8dbbff',
+              400: '#5c99ff',
+              500: '#3875ff',
+              600: '#285ae6',
+              700: '#2148b8',
+              800: '#1e3c94',
+              900: '#1b357a'
+            },
+            accent: {
+              400: '#22d3ee',
+              500: '#06b6d4'
+            },
+            success: { 500: '#10b981' },
+            danger: { 500: '#ef4444' }
+          },
+          boxShadow: {
+            soft: '0 10px 30px rgba(0,0,0,0.10), 0 1px 0 rgba(255,255,255,0.3) inset'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    :root {
+      --glass-bg: rgba(255,255,255,0.7);
+      --glass-stroke: rgba(255,255,255,0.6);
+      --glass-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }
+    .dark:root {
+      --glass-bg: rgba(16,17,19,0.55);
+      --glass-stroke: rgba(255,255,255,0.06);
+      --glass-shadow: 0 16px 40px rgba(0,0,0,0.55);
+    }
+    .glass {
+      background: var(--glass-bg);
+      backdrop-filter: saturate(180%) blur(18px);
+      -webkit-backdrop-filter: saturate(180%) blur(18px);
+      border: 1px solid var(--glass-stroke);
+      box-shadow: var(--glass-shadow);
+    }
+    .btn {
+      transition: transform .12s ease, box-shadow .2s ease, background-color .2s ease, color .2s ease;
+    }
+    .btn:active {
+      transform: translateY(1px) scale(0.995);
+    }
+    .soft-input {
+      background: rgba(148,163,184,0.08);
+      border: 1px solid rgba(148,163,184,0.25);
+      transition: border-color .2s ease, background-color .2s ease, box-shadow .2s ease;
+    }
+    .soft-input:focus-within {
+      border-color: rgba(56,117,255,0.65);
+      box-shadow: 0 0 0 4px rgba(56,117,255,0.12);
+      background: rgba(148,163,184,0.12);
+    }
+    .ratio-21-9 {
+      position: relative;
+      width: 100%;
+      padding-top: calc(100% * 9 / 21);
+    }
+    .ratio-21-9 > img,
+    .ratio-21-9 > .fallback {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      border-radius: 1rem;
+    }
+    .ring-wrap {
+      --p: 0;
+      background:
+        conic-gradient(#3875ff calc(var(--p) * 1%), rgba(148,163,184,0.25) 0);
+      mask: radial-gradient(farthest-side, transparent 64%, black 65%);
+      -webkit-mask: radial-gradient(farthest-side, transparent 64%, black 65%);
+      transition: --p .4s ease;
+    }
+    .switch {
+      --w: 46px; --h: 26px;
+      width: var(--w); height: var(--h);
+      background: rgba(148,163,184,0.3);
+      border: 1px solid rgba(148,163,184,0.35);
+      border-radius: 999px;
+      position: relative;
+      transition: background .2s ease, border-color .2s ease;
+    }
+    .switch::after {
+      content: "";
+      position: absolute; top: 3px; left: 3px;
+      width: calc(var(--h) - 6px); height: calc(var(--h) - 6px);
+      background: white;
+      border-radius: 999px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.25);
+      transition: left .2s ease, background .2s ease;
+    }
+    .switch[data-on="true"] {
+      background: rgba(34,211,238,0.45);
+      border-color: rgba(6,182,212,0.6);
+    }
+    .switch[data-on="true"]::after {
+      left: calc(var(--w) - var(--h) + 3px);
+      background: #e6fcff;
+    }
+    .grid-auto {
+      display: grid;
+      grid-template-columns: repeat(12, minmax(0,1fr));
+      gap: 1.25rem;
+    }
+    @media (max-width: 1024px) {
+      .grid-auto { grid-template-columns: repeat(1,minmax(0,1fr)); gap: 1rem; }
+    }
+    .hero-gradient {
+      background:
+        radial-gradient(1200px 400px at 10% -10%, rgba(56,117,255,0.20), transparent 60%),
+        radial-gradient(1000px 400px at 90% 0%, rgba(34,211,238,0.18), transparent 60%),
+        linear-gradient(180deg, rgba(148,163,184,0.08), transparent 30%),
+        linear-gradient(180deg, rgba(255,255,255,0.7), rgba(255,255,255,0.7));
+    }
+    .dark .hero-gradient {
+      background:
+        radial-gradient(1200px 400px at 10% -10%, rgba(56,117,255,0.30), transparent 60%),
+        radial-gradient(1000px 400px at 90% 0%, rgba(34,211,238,0.22), transparent 60%),
+        linear-gradient(180deg, rgba(148,163,184,0.06), transparent 30%),
+        linear-gradient(180deg, rgba(12,13,15,0.85), rgba(12,13,15,0.85));
+    }
+    .noise {
+      pointer-events: none;
+      position: fixed; inset: 0;
+      background-image: repeating-linear-gradient(0deg, rgba(0,0,0,0.025) 0px, rgba(0,0,0,0.025) 1px, transparent 1px, transparent 2px),
+                       repeating-linear-gradient(90deg, rgba(0,0,0,0.02) 0px, rgba(0,0,0,0.02) 1px, transparent 1px, transparent 2px);
+      opacity: .25;
+      mix-blend-mode: overlay;
+    }
+    .kbd {
+      background: rgba(148,163,184,0.18);
+      border: 1px solid rgba(148,163,184,0.35);
+      border-bottom-width: 2px;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+    .sr {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden; clip: rect(0, 0, 0, 0);
+      white-space: nowrap; border: 0;
+    }
+  </style>
+</head>
+<body class="min-h-full bg-surface-light dark:bg-surface-dark text-ink-light dark:text-ink-inverted antialiased selection:bg-brand-500 selection:text-white">
+  <div class="noise"></div>
+
+  <header class="sticky top-0 z-20 border-b border-white/20 dark:border-white/5 hero-gradient backdrop-blur-xl">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <div class="h-8 w-8 rounded-xl glass grid place-items-center text-brand-600 dark:text-brand-400 font-semibold">%</div>
+        <div class="leading-tight">
+          <div class="text-lg font-semibold tracking-tight">İndirim Hesaplayıcı</div>
+          <div class="text-sm text-ink-muted">Sade Ve Güçlü Hesaplama Deneyimi</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-xl glass">
+          <span class="text-sm text-ink-muted">Tema</span>
+          <button id="themeToggle" class="switch" aria-label="Tema değiştirme anahtarı" data-on="false"></button>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl glass">
+          <label for="currency" class="text-sm text-ink-muted">Para birimi</label>
+          <select id="currency" class="soft-input rounded-lg px-2 py-1.5 text-sm bg-transparent">
+            <option value="TRY">₺ TRY</option>
+            <option value="USD">$ USD</option>
+            <option value="EUR">€ EUR</option>
+            <option value="GBP">£ GBP</option>
+          </select>
+        </div>
+        <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl glass">
+          <label class="text-sm text-ink-muted">Yuvarlama</label>
+          <button id="roundToggle" class="switch" data-on="true" aria-label="Ondalık yuvarlama anahtarı"></button>
+          <span id="roundLabel" class="text-sm text-ink-muted">2 ondalık</span>
+        </div>
+        <a href="#" id="shareLink" class="btn px-3 py-1.5 rounded-xl glass text-sm hover:shadow-soft active:scale-95">Paylaş</a>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-6">
+    <section class="mt-8">
+      <div class="ratio-21-9 glass overflow-hidden">
+        <div class="fallback bg-gradient-to-br from-brand-50/50 to-accent-500/10 dark:from-brand-900/20 dark:to-accent-500/10"></div>
+        <img
+          src="<a href="https://hizliresim.com/scft2ka"><img src="https://i.hizliresim.com/scft2ka.png" alt="Resim Yükle"></a>"
+          alt="Ultra-minimal Apple tarzı ürün sahnesi: beyaz dikişsiz fon üzerinde mat alüminyum, fırçalanmış metal dokular, yumuşak stüdyo ışığı, geniş boşluklu kompozisyon, ortada zarif cam panel ve sağ altta hafif gölge; modern ve ferah görünüm"
+          onerror="this.onerror=null; this.src='https://hizliresim.com/scft2ka"><img src="https://i.hizliresim.com/scft2ka.png';"
+          class="opacity-95"
+        />
+      </div>
+      <div class="text-center mt-8">
+        <h1 class="text-4xl md:text-5xl font-semibold tracking-tight">İndirimi anlamanın en kolay yolu</h1>
+        <p class="mt-3 text-ink-muted max-w-2xl mx-auto">
+          Normal fiyat, indirim yüzdesi ve indirimli fiyat arasında kalan değeri otomatik bulun.
+          Apple benzeri sade, hızlı ve tutarlı bir deneyim.
+        </p>
+      </div>
+    </section>
+
+    <section class="mt-10 grid-auto">
+      <!-- Calculator Card -->
+      <div class="glass rounded-2xl p-6 lg:col-span-7">
+        <h2 class="text-xl font-semibold tracking-tight mb-1">Hesaplama</h2>
+        <p class="text-sm text-ink-muted mb-6">İki alanı doldurun, üçüncüsünü biz hesaplayalım.</p>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <!-- Original Price -->
+          <div class="flex flex-col gap-2">
+            <label for="original" class="text-sm">Normal Fiyat</label>
+            <div class="soft-input rounded-xl px-3 py-2 flex items-center gap-2">
+              <div class="min-w-10 text-ink-muted" id="symOriginal">₺</div>
+              <input id="original" type="text" inputmode="decimal" placeholder="Örn. 1499,90"
+                     class="w-full bg-transparent outline-none"
+                     aria-describedby="originalHelp" />
+              <button data-clear="original" class="text-ink-muted hover:text-danger-500 text-xs">Temizle</button>
+            </div>
+            <div id="originalHelp" class="text-xs text-ink-soft">KDV hariç/ dahil tercihini size bırakır. Biz yalnız tutarı hesaplarız.</div>
+          </div>
+
+          <!-- Discount Percent -->
+          <div class="flex flex-col gap-2">
+            <label for="percent" class="text-sm">İndirim Oranı (%)</label>
+            <div class="soft-input rounded-xl px-3 py-2 flex items-center gap-2">
+              <div class="min-w-10 text-ink-muted">%</div>
+              <input id="percent" type="text" inputmode="decimal" placeholder="Örn. 25"
+                     class="w-full bg-transparent outline-none" />
+              <button data-clear="percent" class="text-ink-muted hover:text-danger-500 text-xs">Temizle</button>
+            </div>
+            <div class="flex flex-wrap gap-2 mt-1">
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="5">5%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="10">10%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="15">15%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="20">20%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="25">25%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="30">30%</button>
+              <button class="btn px-3 py-1.5 rounded-lg bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20"
+                data-quick-percent="50">50%</button>
+            </div>
+          </div>
+
+          <!-- Discounted Price -->
+          <div class="flex flex-col gap-2">
+            <label for="discounted" class="text-sm">İndirimli Fiyat</label>
+            <div class="soft-input rounded-xl px-3 py-2 flex items-center gap-2">
+              <div class="min-w-10 text-ink-muted" id="symDiscounted">₺</div>
+              <input id="discounted" type="text" inputmode="decimal" placeholder="Örn. 1124,90"
+                     class="w-full bg-transparent outline-none" />
+              <button data-clear="discounted" class="text-ink-muted hover:text-danger-500 text-xs">Temizle</button>
+            </div>
+            <div class="text-xs text-ink-soft">İndirim sonrası ödemeniz gereken tutar.</div>
+          </div>
+        </div>
+
+        <div class="mt-6 flex flex-wrap gap-3">
+          <button id="calculateBtn"
+                  class="btn px-4 py-2 rounded-xl bg-brand-600 text-white hover:bg-brand-700">
+            Hesapla
+          </button>
+          <button id="resetBtn"
+                  class="btn px-4 py-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20">
+            Sıfırla
+          </button>
+          <div class="ml-auto flex items-center gap-2 text-sm text-ink-muted">
+            <span>İpucu:</span>
+            <span class="kbd">Tab</span> tuşu ile alanlar arasında geçiş yapın.
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Card -->
+      <div class="glass rounded-2xl p-6 lg:col-span-5">
+        <h2 class="text-xl font-semibold tracking-tight mb-1">Sonuçlar</h2>
+        <p class="text-sm text-ink-muted mb-6">Gerçek zamanlı güncellenir, paylaşabilir veya kopyalayabilirsiniz.</p>
+
+        <div class="grid sm:grid-cols-2 gap-6 items-center">
+          <div class="relative">
+            <div class="ring-wrap w-44 h-44 rounded-full mx-auto"></div>
+            <div class="absolute inset-0 grid place-items-center">
+              <div class="text-center">
+                <div class="text-3xl font-semibold" id="percentOut">0%</div>
+                <div class="text-xs text-ink-muted">Uygulanan indirim</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-ink-muted">Normal Fiyat</div>
+              <div class="font-medium" id="originalOut">₺0,00</div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-ink-muted">İndirim Tutarı</div>
+              <div class="font-medium text-success-500" id="savingOut">₺0,00</div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="text-sm text-ink-muted">İndirimli Fiyat</div>
+              <div class="font-semibold text-brand-700 dark:text-brand-300" id="discountedOut">₺0,00</div>
+            </div>
+
+            <div class="mt-4 flex gap-2">
+              <button id="copyBtn" class="btn px-3 py-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20 text-sm">Sonucu kopyala</button>
+              <button id="refillBtn" class="btn px-3 py-2 rounded-xl bg-white/70 dark:bg-white/10 border border-white/40 hover:bg-white/90 dark:hover:bg-white/20 text-sm">Alanları doldur</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 border-t border-white/30 dark:border-white/10 pt-4 text-xs text-ink-soft">
+          Not: Bu araç yalnızca matematiksel hesaplama yapar. Vergi ve yuvarlama tercihleriniz sonuçları etkileyebilir.
+        </div>
+      </div>
+    </section>
+
+    <section class="mt-12 grid-auto">
+      <div class="glass rounded-2xl p-6 lg:col-span-12">
+        <h3 class="text-lg font-semibold">Sık kullanılanlar</h3>
+        <p class="text-sm text-ink-muted mb-4">Tek dokunuşla hızlı hesaplama senaryoları.</p>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <button class="btn group glass rounded-xl p-4 text-left hover:shadow-soft" data-preset="1999,20">
+            <div class="text-sm text-ink-muted">Örnek: 1999 ₺ ürün, %20 indirim</div>
+            <div class="mt-1 text-2xl font-semibold group-hover:text-brand-600">1999 → %20</div>
+          </button>
+          <button class="btn group glass rounded-xl p-4 text-left hover:shadow-soft" data-preset="999,35">
+            <div class="text-sm text-ink-muted">Örnek: 999 ₺ ürün, %35 indirim</div>
+            <div class="mt-1 text-2xl font-semibold group-hover:text-brand-600">999 → %35</div>
+          </button>
+          <button class="btn group glass rounded-xl p-4 text-left hover:shadow-soft" data-preset="499,50">
+            <div class="text-sm text-ink-muted">Örnek: 499 ₺ ürün, %50 indirim</div>
+            <div class="mt-1 text-2xl font-semibold group-hover:text-brand-600">499 → %50</div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <footer class="py-10 text-center text-sm text-ink-muted">
+      Tasarım yaklaşımı: sade tipografi, geniş boşluk, cam efekti ve yumuşak animasyonlar.
+      GitHub Pages’a index.html olarak koyup hemen kullanabilirsiniz.
+    </footer>
+  </main>
+
+  <script>
+    // Persistent state
+    const $ = (s, r=document) => r.querySelector(s);
+    const $$ = (s, r=document) => [...r.querySelectorAll(s)];
+
+    const els = {
+      themeToggle: $('#themeToggle'),
+      roundToggle: $('#roundToggle'),
+      roundLabel: $('#roundLabel'),
+      currency: $('#currency'),
+      shareLink: $('#shareLink'),
+      original: $('#original'),
+      percent: $('#percent'),
+      discounted: $('#discounted'),
+      symOriginal: $('#symOriginal'),
+      symDiscounted: $('#symDiscounted'),
+      calculateBtn: $('#calculateBtn'),
+      resetBtn: $('#resetBtn'),
+      percentOut: $('#percentOut'),
+      originalOut: $('#originalOut'),
+      savingOut: $('#savingOut'),
+      discountedOut: $('#discountedOut'),
+      ring: $('.ring-wrap'),
+      copyBtn: $('#copyBtn'),
+      refillBtn: $('#refillBtn')
+    };
+
+    const currencyLocales = {
+      TRY: 'tr-TR',
+      USD: 'en-US',
+      EUR: 'de-DE',
+      GBP: 'en-GB'
+    };
+    const currencySymbol = {
+      TRY: '₺',
+      USD: '$',
+      EUR: '€',
+      GBP: '£'
+    };
+
+    let state = {
+      currency: localStorage.getItem('currency') || 'TRY',
+      decimals: localStorage.getItem('decimals') ? Number(localStorage.getItem('decimals')) : 2,
+      theme: localStorage.getItem('theme') || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'),
+      original: null,
+      percent: null,
+      discounted: null
+    };
+
+    // THEME
+    function applyTheme() {
+      const root = document.documentElement;
+      if (state.theme === 'dark') {
+        root.classList.add('dark');
+        els.themeToggle.dataset.on = 'true';
+      } else {
+        root.classList.remove('dark');
+        els.themeToggle.dataset.on = 'false';
+      }
+    }
+    els.themeToggle.addEventListener('click', () => {
+      state.theme = state.theme === 'dark' ? 'light' : 'dark';
+      localStorage.setItem('theme', state.theme);
+      applyTheme();
+    });
+    applyTheme();
+
+    // CURRENCY + DECIMALS
+    function fmtCurrency(val) {
+      try {
+        return new Intl.NumberFormat(currencyLocales[state.currency], {
+          style: 'currency',
+          currency: state.currency,
+          minimumFractionDigits: state.decimals,
+          maximumFractionDigits: state.decimals
+        }).format(val || 0);
+      } catch (e) {
+        // Fallback
+        return `${currencySymbol[state.currency]} ${Number(val || 0).toFixed(state.decimals)}`;
+      }
+    }
+    function fmtPercent(val) {
+      return `${Number(val || 0).toFixed(2)}%`;
+    }
+    function parseNum(s) {
+      if (typeof s !== 'string') return Number(s) || null;
+      const normalized = s
+        .replace(/[^\d.,-]/g, '')
+        .replace(/\./g, '')
+        .replace(',', '.');
+      const n = parseFloat(normalized);
+      return isFinite(n) ? n : null;
+    }
+    function updateSymbols() {
+      els.symOriginal.textContent = currencySymbol[state.currency];
+      els.symDiscounted.textContent = currencySymbol[state.currency];
+      els.originalOut.textContent = fmtCurrency(state.original);
+      els.discountedOut.textContent = fmtCurrency(state.discounted);
+      els.savingOut.textContent = fmtCurrency(savings());
+    }
+    els.currency.value = state.currency;
+    els.currency.addEventListener('change', () => {
+      state.currency = els.currency.value;
+      localStorage.setItem('currency', state.currency);
+      updateSymbols();
+      updateShareLink();
+    });
+
+    // DECIMALS
+    function applyDecimalsLabel() {
+      els.roundLabel.textContent = state.decimals === 2 ? '2 ondalık' : 'Tam sayı';
+      els.roundToggle.dataset.on = state.decimals === 2 ? 'true' : 'false';
+      updateSymbols();
+    }
+    els.roundToggle.addEventListener('click', () => {
+      state.decimals = state.decimals === 2 ? 0 : 2;
+      localStorage.setItem('decimals', String(state.decimals));
+      applyDecimalsLabel();
+      computeAndUpdate();
+      updateShareLink();
+    });
+    applyDecimalsLabel();
+
+    // Auto compute logic
+    function savings() {
+      if (state.original != null && state.discounted != null) {
+        return Math.max(0, state.original - state.discounted);
+      }
+      return 0;
+    }
+    function clampPercent(p) {
+      if (p == null || isNaN(p)) return null;
+      return Math.min(100, Math.max(0, p));
+    }
+    function computeMissing() {
+      const O = state.original;
+      const P = state.percent;
+      const D = state.discounted;
+
+      const filled = [O, P, D].filter(v => v != null && !isNaN(v));
+      if (filled.length < 2) return; // Nothing to do
+
+      // Prioritize stable computation based on which two are provided
+      if (O != null && P != null && (D == null || isNaN(D))) {
+        if (P >= 100) {
+          state.discounted = 0;
+        } else {
+          state.discounted = roundValue(O * (1 - P / 100));
+        }
+      } else if (O != null && D != null && (P == null || isNaN(P))) {
+        if (O === 0) {
+          state.percent = 0;
+        } else {
+          state.percent = clampPercent(roundValue((1 - D / O) * 100, 2));
+        }
+      } else if (D != null && P != null && (O == null || isNaN(O))) {
+        if (P >= 100) {
+          state.original = 0;
+        } else {
+          state.original = roundValue(D / (1 - P / 100));
+        }
+      }
+    }
+    function roundValue(v, fixed = state.decimals) {
+      const f = Math.pow(10, fixed);
+      return Math.round((v + Number.EPSILON) * f) / f;
+    }
+    function updateOutputs(animated = true) {
+      const p = clampPercent(state.percent ?? 0) || 0;
+      els.ring.style.setProperty('--p', p);
+      animateText(els.percentOut, fmtPercent(p), animated);
+
+      animateText(els.originalOut, fmtCurrency(state.original || 0), animated);
+      animateText(els.discountedOut, fmtCurrency(state.discounted || 0), animated);
+      animateText(els.savingOut, fmtCurrency(savings()), animated);
+    }
+    function animateText(el, toText, animated) {
+      if (!animated) { el.textContent = toText; return; }
+      el.style.opacity = 0.6;
+      setTimeout(() => {
+        el.textContent = toText;
+        el.style.opacity = 1;
+      }, 90);
+    }
+    function computeAndUpdate() {
+      // Read inputs
+      const o = parseNum(els.original.value.trim());
+      const p = parseNum(els.percent.value.trim());
+      const d = parseNum(els.discounted.value.trim());
+
+      state.original = isFinite(o) ? o : null;
+      state.percent = isFinite(p) ? p : null;
+      state.discounted = isFinite(d) ? d : null;
+
+      computeMissing();
+
+      // Write back computed if any field was empty
+      if (els.original.value.trim() === '' && state.original != null) els.original.value = String(state.original).replace('.', ',');
+      if (els.percent.value.trim() === '' && state.percent != null) els.percent.value = String(roundValue(state.percent, 2)).replace('.', ',');
+      if (els.discounted.value.trim() === '' && state.discounted != null) els.discounted.value = String(state.discounted).replace('.', ',');
+
+      updateSymbols();
+      updateOutputs();
+      updateShareLink();
+      persistInputs();
+    }
+
+    // Input events
+    [els.original, els.percent, els.discounted].forEach(input => {
+      input.addEventListener('input', () => {
+        // Live compute when exactly 2 fields have values
+        const v = [els.original.value, els.percent.value, els.discounted.value].map(s => s.trim()).filter(Boolean);
+        if (v.length >= 2) computeAndUpdate();
+      });
+      input.addEventListener('change', computeAndUpdate);
+      input.addEventListener('keydown', e => {
+        if (e.key === 'Enter') {
+          computeAndUpdate();
+        }
+      });
+    });
+
+    // Buttons
+    els.calculateBtn.addEventListener('click', computeAndUpdate);
+    els.resetBtn.addEventListener('click', () => {
+      els.original.value = '';
+      els.percent.value = '';
+      els.discounted.value = '';
+      state.original = state.percent = state.discounted = null;
+      updateOutputs(false);
+      updateShareLink();
+      persistInputs();
+    });
+    $$('[data-clear]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.getAttribute('data-clear');
+        const target = document.getElementById(id);
+        if (target) {
+          target.value = '';
+          target.focus();
+          computeAndUpdate();
+        }
+      });
+    });
+    $$('[data-quick-percent]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        els.percent.value = btn.getAttribute('data-quick-percent');
+        computeAndUpdate();
+        els.percent.focus();
+      });
+    });
+    $$('[data-preset]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const [o, p] = btn.getAttribute('data-preset').split(',');
+        els.original.value = o;
+        els.percent.value = p;
+        els.discounted.value = '';
+        computeAndUpdate();
+      });
+    });
+
+    // Copy + refill
+    els.copyBtn.addEventListener('click', async () => {
+      computeAndUpdate();
+      const str = `Normal: ${fmtCurrency(state.original || 0)} | İndirim: ${fmtPercent(state.percent || 0)} | İndirimli: ${fmtCurrency(state.discounted || 0)} | Tasarruf: ${fmtCurrency(savings())}`;
+      try {
+        await navigator.clipboard.writeText(str);
+        pulse(els.copyBtn);
+      } catch (e) {
+        alert('Panoya kopyalanamadı:\n' + str);
+      }
+    });
+    els.refillBtn.addEventListener('click', () => {
+      if (state.original != null) els.original.value = String(state.original).replace('.', ',');
+      if (state.percent != null) els.percent.value = String(roundValue(state.percent, 2)).replace('.', ',');
+      if (state.discounted != null) els.discounted.value = String(state.discounted).replace('.', ',');
+      pulse(els.refillBtn);
+    });
+    function pulse(el) {
+      el.classList.add('ring-2','ring-accent-500/70');
+      setTimeout(() => el.classList.remove('ring-2','ring-accent-500/70'), 350);
+    }
+
+    // Shareable links (Query params)
+    function updateShareLink() {
+      const params = new URLSearchParams();
+      if (els.original.value.trim()) params.set('o', parseNum(els.original.value.trim()));
+      if (els.percent.value.trim()) params.set('p', parseNum(els.percent.value.trim()));
+      if (els.discounted.value.trim()) params.set('d', parseNum(els.discounted.value.trim()));
+      params.set('cur', state.currency);
+      params.set('dec', String(state.decimals));
+      const url = `${location.origin}${location.pathname}?${params.toString()}`;
+      els.shareLink.setAttribute('href', url);
+    }
+    function loadFromQuery() {
+      const q = new URLSearchParams(location.search);
+      const o = q.get('o'), p = q.get('p'), d = q.get('d');
+      const cur = q.get('cur'), dec = q.get('dec');
+      if (cur && currencySymbol[cur]) {
+        state.currency = cur;
+        els.currency.value = cur;
+      }
+      if (dec) {
+        const num = Number(dec);
+        if (num === 0 || num === 2) {
+          state.decimals = num;
+          applyDecimalsLabel();
+        }
+      }
+      if (o) els.original.value = String(o);
+      if (p) els.percent.value = String(p);
+      if (d) els.discounted.value = String(d);
+      updateSymbols();
+      computeAndUpdate();
+    }
+
+    // Persist inputs
+    function persistInputs() {
+      const data = {
+        o: els.original.value.trim(),
+        p: els.percent.value.trim(),
+        d: els.discounted.value.trim()
+      };
+      localStorage.setItem('lastInputs', JSON.stringify(data));
+    }
+    function loadInputs() {
+      try {
+        const raw = localStorage.getItem('lastInputs');
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        if (data.o) els.original.value = data.o;
+        if (data.p) els.percent.value = data.p;
+        if (data.d) els.discounted.value = data.d;
+      } catch {}
+    }
+
+    // Init
+    loadInputs();
+    loadFromQuery();
+    updateSymbols();
+    updateOutputs(false);
+  </script>
+</body>
+</html>
+
