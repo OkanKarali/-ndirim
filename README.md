@@ -1,0 +1,2 @@
+# -ndirim
+İndirim
